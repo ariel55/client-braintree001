@@ -1,26 +1,66 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { Component } from 'react';
 import './App.css';
+import 'braintree-web';
+import axios from 'axios';
+import DropIn from 'braintree-web-drop-in-react';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends Component {
+  instance;
+
+  state = {
+    clientToken: null
+  };
+
+  async componentDidMount() {
+    try {
+
+      // Get a client token for authorization from your server
+      const response = await axios.get(
+        'http://localhost:8000/initializeBraintree'
+      );
+      const clientToken = response.data.data;
+
+      this.setState({ clientToken });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async buy() {
+    try {
+      // Send the nonce to your server
+      const { nonce } = await this.instance.requestPaymentMethod();
+      const response = await axios.post(
+        'http://localhost:8000/confirmBraintree',
+        nonce
+      );
+      console.log(response);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  render() {
+    if (!this.state.clientToken) {
+      return (
+        <div>
+          <h1>Loading...</h1>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <DropIn
+            options={{
+              authorization: this.state.clientToken
+            }}
+            onInstance={(instance) => (this.instance = instance)}
+          />
+          <button onClick={this.buy.bind(this)}>Buy</button>
+        </div>
+      );
+    }
+  }
 }
 
 export default App;
