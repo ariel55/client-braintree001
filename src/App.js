@@ -30,9 +30,18 @@ class App extends Component {
     try {
       // Send the nonce to your server
       const { nonce } = await this.instance.requestPaymentMethod();
+
+      // TODO  parametrizar
+      const vertikalID = "customer_001";
+
+      // TODO si no existe vertikalID crearlo
       const response = await axios.post(
         'http://localhost:8000/confirmBraintree',
-        nonce
+        { 
+          amount: '5.00', 
+          payment_method_nonce: 'fake-valid-nonce',
+          customer_id: vertikalID
+        }
       );
       console.log(response);
     } catch (err) {
